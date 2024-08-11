@@ -14,15 +14,6 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const modelVersion = process.env.OPENAI_MODEL || "gpt-4o";
-
-  const timeout = setTimeout(() => {
-    controller.error(new Error("Stream timeout."));
-  }, 30000); // 30 seconds timeout
-
-  // Clear timeout if stream finishes
-  clearTimeout(timeout);
-
   const hardcodedResponses = {
     hello: "Hi there! How can I assist you today?",
     help: "Sure! What do you need help with?",
@@ -31,16 +22,17 @@ export default function Home() {
 
   const sendMessage = async () => {
     if (!message.trim()) return; // Don't send empty messages
+    setIsLoading(true);
 
-    const response =
+    const hr =
       hardcodedResponses[message.toLowerCase()] ||
       "I'm sorry, I don't understand that command.";
 
-    setMessage("");
+    setMessage(""); // Clear the input field
     setMessages((messages) => [
       ...messages,
-      { role: "user", content: message },
-      { role: "assistant", content: response },
+      { role: "user", content: message }, // Add the user's message to the chat
+      { role: "assistant", content: hr }, // Add a placeholder for the assistant's response
     ]);
 
     try {
@@ -83,6 +75,7 @@ export default function Home() {
         },
       ]);
     }
+    setIsLoading(false);
   };
 
   const handleKeyPress = (event) => {
@@ -110,14 +103,16 @@ export default function Home() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
+      bgcolor="#F7F8FA" // ChatGPT-like background color
     >
       <Stack
         direction={"column"}
         width="500px"
         height="700px"
-        border="1px solid black"
+        borderRadius="8px"
+        boxShadow="0px 2px 10px rgba(0, 0, 0, 0.1)"
         p={2}
-        spacing={3}
+        bgcolor="white" // Chat container background
       >
         <Stack
           direction={"column"}
@@ -125,6 +120,14 @@ export default function Home() {
           flexGrow={1}
           overflow="auto"
           maxHeight="100%"
+          p={2}
+          sx={{
+            "&::-webkit-scrollbar": { width: "8px" },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#C4C4C4",
+              borderRadius: "4px",
+            },
+          }}
         >
           {messages.map((message, index) => (
             <Box
@@ -137,12 +140,13 @@ export default function Home() {
               <Box
                 bgcolor={
                   message.role === "assistant"
-                    ? "primary.main"
-                    : "secondary.main"
+                    ? "#E5E7EB" // ChatGPT assistant message background color
+                    : "#007BFF" // User message background color
                 }
-                color="white"
-                borderRadius={16}
-                p={3}
+                color={message.role === "assistant" ? "black" : "white"}
+                borderRadius="12px"
+                p={2}
+                maxWidth="80%"
               >
                 {message.content}
               </Box>
@@ -150,19 +154,35 @@ export default function Home() {
           ))}
           <div ref={messagesEndRef} />
         </Stack>
-        <Stack direction={"row"} spacing={2}>
+        <Stack direction={"row"} spacing={2} pt={2}>
           <TextField
-            label="Message"
+            label="Type a message..."
+            variant="outlined"
             fullWidth
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isLoading}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "24px", // Rounded corners for the input box
+                bgcolor: "#F0F0F0", // Light background color
+              },
+              "& .MuiOutlinedInput-input": {
+                padding: "12px 16px", // Adjust padding
+              },
+            }}
           />
           <Button
             variant="contained"
             onClick={sendMessage}
             disabled={isLoading}
+            sx={{
+              borderRadius: "24px", // Rounded corners for the send button
+              bgcolor: "#007BFF", // Send button color
+              color: "white",
+              padding: "12px 24px",
+            }}
           >
             {isLoading ? "Sending..." : "Send"}
           </Button>
